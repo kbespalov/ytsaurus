@@ -450,6 +450,11 @@ TFuture<std::vector<TKafkaSource::TRecord>> TKafkaSource::DoReadNextBatch(
         }
         return MakeFuture(std::move(records));
     } catch (const std::exception& ex) {
+        // Messages are popped before ProcessMessage, and |records| is discarded with this error.
+        // A later read of this source at the same offset would serve the leftover tail without
+        // calling GetBatch and would skip the range the session has to re-read. Drop the tail so
+        // the next read seeks.
+        PendingMessages_.clear();
         auto error = TError("Critical Kafka read failure").With(ex);
         YT_TLOG_ERROR("Critical Kafka read failure")
             .With(ex);

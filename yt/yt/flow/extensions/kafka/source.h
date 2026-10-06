@@ -128,7 +128,8 @@ private:
 
     TKafkaReadSessionPtr ReadSession_;
     //! Fetched messages left over when a batch is cut by unpacked rows; the session cannot serve
-    //! them again without a seek.
+    //! them again without a seek. #DoReadNextBatch drops them when a read fails, so a later read
+    //! at the same offset seeks instead of serving the tail.
     std::deque<TKafkaReadSession::TKafkaMessage> PendingMessages_;
 
     NConcurrency::TPeriodicExecutorPtr PartitionInfoUpdater_;
